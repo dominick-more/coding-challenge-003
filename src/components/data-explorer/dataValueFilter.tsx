@@ -1,5 +1,5 @@
 import { FC, useCallback, useContext, useMemo } from 'react';
-import { Box, Slider, Typography } from '@mui/material';
+import { Box, Slider, sliderClasses, SliderProps, styled, Typography } from '@mui/material';
 import DataExplorerContext from '../../contexts/data-explorer/dataExplorerContext';
 import { ValueFilter } from '../../types/data-explorer/dataExplorerState';
 
@@ -8,6 +8,14 @@ const DataExplorerValueFilterId = 'data-explorer-value-filter';
 const initMinMax: Readonly<ValueFilter> = [0, 1];
 
 const formatDisplayValue = (value: number): string => `$${value}`;
+
+const StyledSlider = styled((props: SliderProps) => (
+    <Slider {...props} />
+  ))(({ theme }) => ({
+    [`& .${sliderClasses.markLabel}`]: {
+      fontSize: '0.725rem !important'
+    }
+  }));
 
 const DataValueFilter: FC = () => {
     const context = useContext(DataExplorerContext);
@@ -84,7 +92,7 @@ const DataValueFilter: FC = () => {
                 color='text.secondary'>
                 Spending
             </Typography>
-            <Slider
+            <StyledSlider
                 id={DataExplorerValueFilterId}
                 min={minMaxValues[0]}
                 max={minMaxValues[1]}

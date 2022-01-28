@@ -113,7 +113,7 @@ const DataAppCardView: FC = () => {
         <Box
             sx={{
                 position: 'relative',
-                height: '100%',
+                minHeight: '100%',
                 width: '100%',
                 backgroundColor: `${theme.custom?.panel?.inner?.backroundColor}`,
                 borderRadius: `${theme.custom?.panel?.inner?.borderRadius}`,
@@ -132,12 +132,8 @@ const DataAppCardView: FC = () => {
                     columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}
                     wrap='wrap'
                     sx={{
-                        height: 'fit-content',
-                        maxHeight: '100%',
                         width: '100%',
-                        margin: '0px',
-                        overflowY: 'auto',
-                        scrollbarWidth: 'thin'
+                        margin: '0px'
                 }}>
                     {childNodes}
                 </Grid>

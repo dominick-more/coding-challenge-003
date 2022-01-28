@@ -1,12 +1,14 @@
 import { FC, useContext, useEffect } from 'react';
-import { Box, Container, Divider, Grid, Typography } from '@mui/material';
+import { Box, Divider, Grid, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import DataExplorerProvider from '../../providers/data-explorer/dataExplorerProvider';
 import DataExplorerContext from '../../contexts/data-explorer/dataExplorerContext';
 import DataTreeView from './dataTreeView';
 import DataValueFilter from './dataValueFilter';
 import DataAppCardView from './dataAppCardView';
-
+import { ThemeProvider } from '@mui/material/styles';
+import dataExplorerTheme from '../../themes/data-explorer/dataExplorerTheme';
+   
 const DataExplorerId = 'data-explorer';
 
 const DataExplorerLeftPanel: FC = () => {
@@ -20,7 +22,7 @@ const DataExplorerLeftPanel: FC = () => {
             justifyContent='center'
             alignItems='stretch'
             sx={{
-                height: '100%',
+                height: 'auto',
                 minWidth: '274px',
                 paddingBottom: `${theme.custom?.panel?.outer?.paddingBottom}`,
                 paddingLeft: `${theme.custom?.panel?.outer?.paddingLeft}`,
@@ -106,36 +108,26 @@ const DataExplorerLeftPanel: FC = () => {
 const DataExplorerRightPanel: FC = () => {
     const theme = useTheme();
     return (
-        <Grid container item xs sx={{
-            height: '100%',
-            flex: '2',
-            paddingBottom: `${theme.custom?.panel?.outer?.paddingBottom}`,
-            paddingLeft: `8px !important`,
-            paddingRight: `${theme.custom?.panel?.outer?.paddingRight}`,
-            paddingTop: `${theme.custom?.panel?.outer?.paddingTop}`,
-            backgroundColor: `${theme.custom?.panel?.outer?.backroundColor}`
-        }}>
-            <Grid
-                container
-                item
-                xs
-                direction='column'
-                justifyContent='flex-start'
-                alignItems='stretch'
-                sx={{
-                    height: '100%'
-                }}>
-                <Grid item xs={0}>
-                    <Box sx={{height: '1.85rem'}}/>
-                </Grid>
-                <Grid
-                    item
-                    xs
-                    sx={{
-                        height: '100%'
-                    }}>
-                    <DataAppCardView/>
-                </Grid>
+        <Grid container
+            item
+            xs
+            direction='column'
+            justifyContent='flex-start'
+            alignItems='stretch'  
+            sx={{
+                height: 'auto',
+                flex: '2',
+                paddingBottom: `${theme.custom?.panel?.outer?.paddingBottom}`,
+                paddingLeft: `8px !important`,
+                paddingRight: `${theme.custom?.panel?.outer?.paddingRight}`,
+                paddingTop: `${theme.custom?.panel?.outer?.paddingTop}`,
+                backgroundColor: `${theme.custom?.panel?.outer?.backroundColor}`
+            }}>
+            <Grid item xs={0}>
+                <Box sx={{height: '1.85rem'}}>&nbsp;</Box>
+            </Grid>
+            <Grid item xs sx={{overflow: 'auto', scrollbarWidth: 'thin'}}>
+                <DataAppCardView/>
             </Grid>
         </Grid>
     );
@@ -163,37 +155,33 @@ const DataExplorerContainer: FC = () => {
     }, [fetchStatus, utils]);
 
     return (
-        <Container
+        <Grid
             id={DataExplorerId}
-            maxWidth='lg'
+            container
+            direction='row'
+            spacing={1}
             sx={{
-                height: '100%',
+                height:'100%',
+                width:'100%',
+                minHeight: '480px',
                 minWidth: '640px',
-                padding: '20px 0'
+                margin:'0',
+                padding: '0',
+                backgroundColor: `${theme.custom?.panel?.outer?.backroundColor}`
             }}>
-            <Grid
-                container
-                direction='row'
-                spacing={1}
-                sx={{
-                    height:'100%',
-                    width:'100%',
-                    margin:'0',
-                    padding: '0',
-                    backgroundColor: `${theme.custom?.panel?.outer?.backroundColor}`
-                }}>
-                <DataExplorerLeftPanel/>
-                <DataExplorerRightPanel/>
-            </Grid>
-        </Container>
+            <DataExplorerLeftPanel/>
+            <DataExplorerRightPanel/>
+        </Grid>
     );
 };
 
 const DataExplorer: FC = () => {
     return (
-         <DataExplorerProvider>
-            <DataExplorerContainer/>
-         </DataExplorerProvider>    
+        <ThemeProvider theme={dataExplorerTheme}>
+            <DataExplorerProvider>
+                <DataExplorerContainer/>
+            </DataExplorerProvider>
+        </ThemeProvider>    
     );
 }
 
