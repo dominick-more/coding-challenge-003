@@ -1,19 +1,29 @@
-import { useContext, useMemo, FC, ReactNode, SyntheticEvent, Fragment } from 'react';
-import { TreeItem, TreeView } from '@mui/lab';
+import { useContext, FC, ReactNode, SyntheticEvent, Fragment, useCallback } from 'react';
+import { TreeItem, treeItemClasses, TreeItemProps, TreeView } from '@mui/lab';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import DataExplorerContext from '../../contexts/data-explorer/dataExplorerContext';
 import DataTreeNode, { DataTreeNodeType, DataTreeRootNodeId } from '../../types/data-explorer/dataTreeNode';
-import { Box } from '@mui/material';
+import { Box, styled, SxProps, Theme } from '@mui/material';
+
+const DataExplorerCapabilityTreeId = 'data-explorer-capability-tree';
 
 const createTreeNodeKey = (treeNode: DataTreeNode): string => `tree-item-${treeNode.nodeId}`;
+
+const StyledTreeItem = styled((props: TreeItemProps) => (
+    <TreeItem {...props} />
+  ))(({ theme }) => ({
+    [`& .${treeItemClasses.label}`]: {
+      fontSize: '0.8rem !important'
+    }
+  }));
 
 const DataTreeItem: FC<{treeNode: DataTreeNode}> = ({treeNode, children}) => {
     const { nodeId, name } = treeNode;
     return (
-        <TreeItem nodeId={nodeId} label={name} key={createTreeNodeKey(treeNode)}>
+        <StyledTreeItem nodeId={nodeId} label={name} key={createTreeNodeKey(treeNode)}>
             {children}
-        </TreeItem>
+        </StyledTreeItem>
     );
 };
 
@@ -22,7 +32,8 @@ const renderTreeNodeRecursive: FC<{treeNode: DataTreeNode}> = ({treeNode}) => {
     if (type !== DataTreeNodeType.branch) {
         return null;
     }
-    const childNodes: ReactNode = ((children !== undefined) && Object.getOwnPropertyNames(children).length) ?
+    const childNodes: ReactNode = ((children !== undefined) &&
+        Object.getOwnPropertyNames(children).length) ?
         Object.values(children).filter((childNode) => {
             return (childNode.type === DataTreeNodeType.branch)
         }).map((childNode) => {
@@ -41,28 +52,28 @@ const renderTreeNodeRecursive: FC<{treeNode: DataTreeNode}> = ({treeNode}) => {
     }
 };
 
-const DataTreeView: FC = () => {
+const DataTreeView: FC<{sx?: SxProps<Theme>}> = ({sx}) => {
     const context = useContext(DataExplorerContext);
     const { state, utils } = context || {};
     const { data } = state || {};
     
-    const onNodeSelect = useMemo(() => {
-        return (event: SyntheticEvent, nodeId: string): void => {
-            if ((utils === undefined) || (data === undefined)) {
+    // Memoize TreeView onNodeSelect handler based on context utils
+    const onNodeSelect = useCallback(
+        (event: SyntheticEvent, nodeId: string): void => {
+            if (utils === undefined) {
                 return;
             }
             event.preventDefault();
             utils.updateTreeNodeSelection(nodeId);
-        };
-    }, [data, utils]);
+    }, [utils]);
 
     if (data !== undefined) {
         return (
-            <Box>
+            <Box sx={sx}>
                 <TreeView
+                    id={DataExplorerCapabilityTreeId}
                     defaultCollapseIcon={<ArrowDropUpIcon />}
                     defaultExpandIcon={<ArrowDropDownIcon />}
-                    key='data-tree-view'
                     onNodeSelect={onNodeSelect}
                 >
                     {renderTreeNodeRecursive({treeNode: data})}
@@ -75,3 +86,7 @@ const DataTreeView: FC = () => {
 };
 
 export default DataTreeView;
+
+export {
+    DataExplorerCapabilityTreeId
+}

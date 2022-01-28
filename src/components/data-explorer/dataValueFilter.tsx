@@ -1,7 +1,9 @@
 import { FC, useCallback, useContext, useMemo } from 'react';
-import { Box, Slider } from '@mui/material';
+import { Box, Slider, Typography } from '@mui/material';
 import DataExplorerContext from '../../contexts/data-explorer/dataExplorerContext';
 import { ValueFilter } from '../../types/data-explorer/dataExplorerState';
+
+const DataExplorerValueFilterId = 'data-explorer-value-filter';
 
 const initMinMax: Readonly<ValueFilter> = [0, 1];
 
@@ -11,6 +13,9 @@ const DataValueFilter: FC = () => {
     const context = useContext(DataExplorerContext);
     const { state, utils } = context || {};
     const { data, valueFilter } = state || {};
+
+    // Memoize tree leaf item values when remote data changes as these
+    // are slider mandatory values (i.e. before fetch, after fetch) 
     const minMaxValues = useMemo((): Readonly<ValueFilter> => {
         if ((utils === undefined) || (data === undefined)) {
             return initMinMax;
@@ -18,6 +23,7 @@ const DataValueFilter: FC = () => {
         return utils.getMinMaxFilterValue(data);
     }, [data, utils]);
 
+    // Memoize slider min/max values/labels when data changes
     const sliderMarks = useMemo(() => {
         return [
             {
@@ -30,6 +36,9 @@ const DataValueFilter: FC = () => {
             },
         ];
     }, [minMaxValues]);
+
+    // Memoize normalize filter value function when minMaxValues
+    // changes.
     const normalizeFilterValue = useCallback(
         (value: number | number[]): Readonly<ValueFilter> | undefined => {
         const [min, max] = minMaxValues;
@@ -53,10 +62,10 @@ const DataValueFilter: FC = () => {
             }
         }
         return undefined;
-
-        
     }, [minMaxValues]);
     
+    // Memoize Slider handle change callback when normalizeFilterValue
+    // or utils change.
     const handleChange = useCallback((_event: Event, value: number | number[]): void => {
         if (utils === undefined) {
             return;
@@ -66,19 +75,29 @@ const DataValueFilter: FC = () => {
     }, [normalizeFilterValue, utils]);
 
     return (
-        <Box>
-            <h6 style={{margin: '0 0 2px 0'}}>Spending</h6>
+        <Box sx={{paddingRight: '8px'}}>
+            <Typography
+                sx={{
+                    fontSize: '0.75em',
+                    fontWeight: 'bold'
+                }}
+                color='text.secondary'>
+                Spending
+            </Typography>
             <Slider
+                id={DataExplorerValueFilterId}
                 min={minMaxValues[0]}
                 max={minMaxValues[1]}
                 disableSwap
                 marks={sliderMarks}
                 onChange={handleChange}
                 size='small'
-                value={[...(valueFilter !== undefined) ? valueFilter : minMaxValues]}
+                value={[
+                    ...(valueFilter !== undefined) ?
+                    valueFilter : minMaxValues]}
                 valueLabelDisplay='auto'
                 sx={{
-                    marginLeft: '8px',
+                    marginLeft: '20px',
                     width: '90%'
                 }}
             />
@@ -87,3 +106,7 @@ const DataValueFilter: FC = () => {
 };
 
 export default DataValueFilter;
+
+export {
+    DataExplorerValueFilterId
+}
