@@ -32,6 +32,7 @@ type UpdateValueFilterAction = {
 type DataExplorerStateAction = UpdateDataAction | UpdateFetchStatusAction |
     UpdateTreeNodeSelectionAction | UpdateValueFilterAction;
 
+type DataExplorerStateInitializer = (arg?: DataExplorerState) => DataExplorerState;
 
 const createRootTreeNode = (): DataTreeNode => {
     return {
@@ -43,12 +44,15 @@ const createRootTreeNode = (): DataTreeNode => {
     };
 };
 
-const createDataExplorerInitState = (): DataExplorerState => {
+const defaultStateInitializer: DataExplorerStateInitializer = (arg?: DataExplorerState) => {
+    if (arg !== undefined) {
+        return arg;
+    }
     return {
         data: createRootTreeNode()
-     };
+    };
 };
-    
+   
 const dataExplorerReducer: Reducer<DataExplorerState, DataExplorerStateAction> =
     (state: DataExplorerState, action: DataExplorerStateAction): DataExplorerState => {
     switch (action.type) {
@@ -95,7 +99,8 @@ const dataExplorerReducer: Reducer<DataExplorerState, DataExplorerStateAction> =
 export default dataExplorerReducer;
 
 export {
-    createDataExplorerInitState,
+    createRootTreeNode,
+    defaultStateInitializer,
     DataExplorerActionType
 }
 
@@ -103,5 +108,6 @@ export type {
     DataExplorerStateAction,
     UpdateDataAction,
     UpdateFetchStatusAction,
-    UpdateTreeNodeSelectionAction
+    UpdateTreeNodeSelectionAction,
+    DataExplorerStateInitializer
 }

@@ -1,6 +1,6 @@
 import { Card, Grid, Typography, Theme, SxProps, useTheme, Box } from '@mui/material';
-import { useContext, useMemo, FC, ReactNode } from 'react';
-import DataExplorerContext from '../../contexts/data-explorer/dataExplorerContext';
+import { useMemo, FC, ReactNode } from 'react';
+import useDataExplorerHook from '../../hooks/data-explorer/dataExplorerHook';
 import DataTreeNode from '../../types/data-explorer/dataTreeNode';
 
 const DataExplorerAppCardViewId = 'data-explorer-app-card-view';
@@ -35,7 +35,7 @@ const DataAppCard: FC<{treeNode: DataTreeNode}> = ({treeNode}) => {
         <Card
             sx={{
                 height: '96px',
-                width: '146px',
+                width: '156px',
                 padding: '18px 12px',
                 textAlign: 'center'
             }}>
@@ -61,19 +61,21 @@ const DataAppCard: FC<{treeNode: DataTreeNode}> = ({treeNode}) => {
 };
 
 const DataAppCardView: FC = () => {
-    const context = useContext(DataExplorerContext);
+    const context = useDataExplorerHook();
     const theme = useTheme();
-    const { state, utils } = context || {};
+    const { state, actionCreators, readAccessors } = context || {};
     const { data, treeNodeSelection, valueFilter } = state || {};
 
     // Memoize app tree nodes based on current node branch selection and value filter.
     const appTreeNodes = useMemo(() => {
-        if ((utils === undefined) || (data === undefined) || (treeNodeSelection === undefined)) {
+        if ((actionCreators === undefined) || (readAccessors === undefined) ||
+            (data === undefined) || (treeNodeSelection === undefined)) {
             return undefined;
         }
-        const dataTreeLeaves = utils.filterDataTreeLeaves(data, treeNodeSelection, valueFilter);
+        const dataTreeLeaves = readAccessors.filterDataTreeLeaves(
+            data, treeNodeSelection, valueFilter);
         return dataTreeLeaves;
-    }, [data, treeNodeSelection, utils, valueFilter]);
+    }, [data, actionCreators, readAccessors, treeNodeSelection, valueFilter]);
 
     // Conditionally create child nodes based on appTreeNodes value
     let displayMessage: boolean = true;
@@ -102,7 +104,7 @@ const DataAppCardView: FC = () => {
                 justifyContent='center'
                 sx={{
                     display: 'flex',
-                    margin: '16px 0 1px',
+                    margin: '8px 0',
                     padding: '0px !important'
                 }}>
                 <DataAppCard treeNode={childNode}/>
@@ -115,8 +117,8 @@ const DataAppCardView: FC = () => {
                 position: 'relative',
                 minHeight: '100%',
                 width: '100%',
-                backgroundColor: `${theme.custom?.panel?.inner?.backroundColor}`,
-                borderRadius: `${theme.custom?.panel?.inner?.borderRadius}`,
+                backgroundColor: theme.custom?.panel?.inner?.backroundColor,
+                borderRadius: theme.custom?.panel?.inner?.borderRadius,
             }}>
             {
                 displayMessage ? childNodes :
@@ -133,6 +135,7 @@ const DataAppCardView: FC = () => {
                     wrap='wrap'
                     sx={{
                         width: '100%',
+                        padding: '8px 0',
                         margin: '0px'
                 }}>
                     {childNodes}

@@ -1,15 +1,11 @@
-import { FC, useContext, useEffect } from 'react';
+import { FC } from 'react';
 import { Box, Divider, Grid, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import DataExplorerProvider from '../../providers/data-explorer/dataExplorerProvider';
-import DataExplorerContext from '../../contexts/data-explorer/dataExplorerContext';
-import DataTreeView from './dataTreeView';
 import DataValueFilter from './dataValueFilter';
 import DataAppCardView from './dataAppCardView';
-import { ThemeProvider } from '@mui/material/styles';
-import dataExplorerTheme from '../../themes/data-explorer/dataExplorerTheme';
-   
-const DataExplorerId = 'data-explorer';
+import DataTreeView from './dataTreeView';
+  
+const DataExplorerPanelId = 'data-explorer-panel';
 
 const DataExplorerLeftPanel: FC = () => {
     const theme = useTheme();
@@ -133,41 +129,30 @@ const DataExplorerRightPanel: FC = () => {
     );
 };
 
-const DataExplorerContainer: FC = () => {
-    const context = useContext(DataExplorerContext);
+type DataExplorerPanelProps = {
+    maxHeight?: number | string;
+    maxWidth?: number | string;
+}
+
+const DataExplorerPanel: FC<DataExplorerPanelProps> = ({maxHeight, maxWidth}) => {
     const theme = useTheme();
-    const { state, utils } = context || {};
-    const { fetchStatus } = state || {};
-
-    // Fetching server data in the top level data explorer render component
-    useEffect(() => {
-        if (utils === undefined) {
-            return;
-        }
-        // If fetch is already initialized return
-        if (fetchStatus !== undefined) {
-            return;
-        }
-        (async () => {
-            await utils.fetchData();
-        })();
-        
-    }, [fetchStatus, utils]);
-
     return (
         <Grid
-            id={DataExplorerId}
+            id={DataExplorerPanelId}
+            data-testid={DataExplorerPanelId}
             container
             direction='row'
             spacing={1}
             sx={{
-                height:'100%',
-                width:'100%',
+                height: '100%',
+                width: '100%',
+                margin: '0px',
+                maxHeight: maxHeight !== undefined ? maxHeight: 'inherit',
+                maxWidth: maxWidth !== undefined ? maxWidth: 'inherit',
                 minHeight: '480px',
                 minWidth: '640px',
-                margin:'0',
                 padding: '0',
-                backgroundColor: `${theme.custom?.panel?.outer?.backroundColor}`
+                backgroundColor: theme.custom?.panel?.outer?.backroundColor
             }}>
             <DataExplorerLeftPanel/>
             <DataExplorerRightPanel/>
@@ -175,18 +160,12 @@ const DataExplorerContainer: FC = () => {
     );
 };
 
-const DataExplorer: FC = () => {
-    return (
-        <ThemeProvider theme={dataExplorerTheme}>
-            <DataExplorerProvider>
-                <DataExplorerContainer/>
-            </DataExplorerProvider>
-        </ThemeProvider>    
-    );
-}
-
-export default DataExplorer;
+export default DataExplorerPanel;
 
 export {
-    DataExplorerId
+    DataExplorerPanelId
+}
+
+export type {
+    DataExplorerPanelProps
 }

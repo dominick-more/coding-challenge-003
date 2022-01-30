@@ -1,7 +1,7 @@
-import { FC, useCallback, useContext, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 import { Box, Slider, sliderClasses, SliderProps, styled, Typography } from '@mui/material';
-import DataExplorerContext from '../../contexts/data-explorer/dataExplorerContext';
 import { ValueFilter } from '../../types/data-explorer/dataExplorerState';
+import useDataExplorerHook from '../../hooks/data-explorer/dataExplorerHook';
 
 const DataExplorerValueFilterId = 'data-explorer-value-filter';
 
@@ -18,18 +18,18 @@ const StyledSlider = styled((props: SliderProps) => (
   }));
 
 const DataValueFilter: FC = () => {
-    const context = useContext(DataExplorerContext);
-    const { state, utils } = context || {};
+    const context = useDataExplorerHook();
+    const { actionCreators, eventHandlers, readAccessors, state } = context || {};
     const { data, valueFilter } = state || {};
 
     // Memoize tree leaf item values when remote data changes as these
     // are slider mandatory values (i.e. before fetch, after fetch) 
     const minMaxValues = useMemo((): Readonly<ValueFilter> => {
-        if ((utils === undefined) || (data === undefined)) {
+        if ((readAccessors === undefined) || (data === undefined)) {
             return initMinMax;
         }
-        return utils.getMinMaxFilterValue(data);
-    }, [data, utils]);
+        return readAccessors.getMinMaxFilterValue(data);
+    }, [data, readAccessors]);
 
     // Memoize slider min/max values/labels when data changes
     const sliderMarks = useMemo(() => {
@@ -47,40 +47,23 @@ const DataValueFilter: FC = () => {
 
     // Memoize normalize filter value function when minMaxValues
     // changes.
-    const normalizeFilterValue = useCallback(
-        (value: number | number[]): Readonly<ValueFilter> | undefined => {
-        const [min, max] = minMaxValues;
-        const arrayValue = Array.isArray(value) ? [...value] : [value];
-        const length = arrayValue.length;
-        if (!length) {
+    const normalizeFilterValue = useMemo(() => {
+        if (readAccessors === undefined) {
             return undefined;
         }
-        if (length === 1) {
-            const newValue = arrayValue[0];
-            if (newValue >= min) {
-                return (newValue <= max) ? [min, newValue] : undefined;
-            }
-            return undefined;
-        }
-        arrayValue.sort((a, b) => a - b);
-        const [newMinValue, newMaxValue] = [...arrayValue.slice(0, 2)];
-        if (newMinValue >= min) {
-            if (newMaxValue <= max) {
-                return [newMinValue, newMaxValue];
-            }
-        }
-        return undefined;
-    }, [minMaxValues]);
+        return readAccessors.createNormalizeValueFilter(minMaxValues);
+    }, [minMaxValues, readAccessors]);
     
     // Memoize Slider handle change callback when normalizeFilterValue
     // or utils change.
-    const handleChange = useCallback((_event: Event, value: number | number[]): void => {
-        if (utils === undefined) {
-            return;
+    const handleChange = useMemo(() => {
+        if ((normalizeFilterValue === undefined) || (eventHandlers === undefined)) {
+            return undefined;
         }
-        const newValue = normalizeFilterValue(value);
-        utils.updateValueFilter(newValue);
-    }, [normalizeFilterValue, utils]);
+        return eventHandlers.createUpdateFilterValue({
+            normalizeFilterValue, actionCreators, readAccessors
+        });
+    }, [normalizeFilterValue, actionCreators, eventHandlers, readAccessors]);
 
     return (
         <Box sx={{paddingRight: '8px'}}>
