@@ -206,8 +206,7 @@ describe('DataExplorerHook Tests', () => {
         act(() => {
             actionCreators.updateValueFilter(newValueFilter);
         });
-        const { state: newState, readAccessors } =
-            expectHookResult(hookResultAccessor.getValue());
+        const { state: newState } = expectHookResult(hookResultAccessor.getValue());
         expect(newState.valueFilter).toEqual(newValueFilter);
     });
 
@@ -280,7 +279,8 @@ describe('DataExplorerHook Tests', () => {
         const { readAccessors, state: newState } = expectHookResult(hookResultAccessor.getValue());
         expect(newState.treeNodeSelection).toEqual(newNodeId);
         expect(newState.valueFilter).toBeUndefined();
-        const filteredLeaves = readAccessors.filterDataTreeLeaves(newState.data, newState.treeNodeSelection, newState.valueFilter);
+        const filteredLeaves = readAccessors.filterDataTreeLeaves(
+            newState.data, newState.treeNodeSelection, newState.valueFilter);
         expect(filteredLeaves).toBeDefined();
         if (filteredLeaves === undefined) {
             return;

@@ -23,7 +23,7 @@ const DataTreeItem: FC<{treeNode: DataTreeNode}> = ({treeNode, children}) => {
     const { nodeId, name } = treeNode;
     const uniqueKey = createTreeNodeKey(treeNode);
     return (
-        <StyledTreeItem nodeId={nodeId} label={name} key={uniqueKey} data-testid={uniqueKey}>
+        <StyledTreeItem nodeId={nodeId} label={name} data-testid={uniqueKey}>
             {children}
         </StyledTreeItem>
     );
@@ -55,8 +55,7 @@ const renderTreeNodeRecursive: FC<{treeNode?: DataTreeNode}> = ({treeNode}) => {
 };
 
 const DataTreeView: FC<{sx?: SxProps<Theme>}> = ({sx}) => {
-    const context = useDataExplorerHook();
-    const { state, actionCreators, eventHandlers } = context || {};
+    const { state, actionCreators, eventHandlers } = useDataExplorerHook();
     const { data } = state || {};
     
     // Memoize TreeView onNodeSelect handler based on context utils

@@ -147,11 +147,10 @@ const DataExplorerPanel: FC<DataExplorerPanelProps> = ({maxHeight, maxWidth}) =>
                 height: '100%',
                 width: '100%',
                 margin: '0px',
-                maxHeight: maxHeight !== undefined ? maxHeight: 'inherit',
-                maxWidth: maxWidth !== undefined ? maxWidth: 'inherit',
+                maxHeight: maxHeight !== undefined ? maxHeight: 'unset',
+                maxWidth: maxWidth !== undefined ? maxWidth: 'unset',
                 minHeight: '480px',
                 minWidth: '640px',
-                padding: '0',
                 backgroundColor: theme.custom?.panel?.outer?.backroundColor
             }}>
             <DataExplorerLeftPanel/>

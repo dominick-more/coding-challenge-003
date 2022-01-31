@@ -1,8 +1,6 @@
-import { act, findAllByRole,findByTestId,getByTestId, getByText } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, getByTestId } from '@testing-library/react';
 import assert from 'assert';
 import { render } from 'react-dom';
-import { DataExplorerHookResult } from '../../hooks/data-explorer/dataExplorerHook';
 import { createAsyncWaitCallback, setupMockFetchSuccess } from '../../test-utils/testUtils';
 import DataExplorerContainer from './dataExplorerContainer';
 import DataExplorerPanel, { DataExplorerPanelId } from './dataExplorerPanel';

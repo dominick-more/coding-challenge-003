@@ -8,9 +8,9 @@ import { createAsyncWaitCallback, setupMockFetchSuccess } from '../../test-utils
 import DataExplorerContainer from './dataExplorerContainer';
 import DataTreeView, { createTreeNodeKey, DataTreeViewId } from './dataTreeView';
 
-const findAndClickTreeItemByNodeId = async (
+const findAndClickTreeItemByNodeId = (
     dataHookResult: Required<DataExplorerHookResult>,
-    container: HTMLElement, treeNodeId: string): Promise<HTMLElement> => {
+    container: HTMLElement, treeNodeId: string): HTMLElement => {
     const { readAccessors, state } = dataHookResult;
     const treeNode = readAccessors.findDataTreeNode(state.data, treeNodeId);
     if (treeNode === undefined) {
@@ -76,9 +76,9 @@ describe('DataTreeView Tests', () => {
             });
         });
         const hookResult = expectHookResult(hookResultAccessor.getValue());
-        const treeItemL01 = await findAndClickTreeItemByNodeId(hookResult, container, '46');
-        const treeItemL02 = await findAndClickTreeItemByNodeId(hookResult, treeItemL01, '61');
-        const treeItemL03 = await findAndClickTreeItemByNodeId(hookResult, treeItemL02, '65');
+        const treeItemL01 = findAndClickTreeItemByNodeId(hookResult, container, '46');
+        const treeItemL02 = findAndClickTreeItemByNodeId(hookResult, treeItemL01, '61');
+        const treeItemL03 = findAndClickTreeItemByNodeId(hookResult, treeItemL02, '65');
         expect(treeItemL03).toHaveAttribute('aria-selected', 'true');
     });
 });

@@ -18,8 +18,7 @@ const StyledSlider = styled((props: SliderProps) => (
   }));
 
 const DataValueFilter: FC = () => {
-    const context = useDataExplorerHook();
-    const { actionCreators, eventHandlers, readAccessors, state } = context || {};
+    const { actionCreators, eventHandlers, readAccessors, state } = useDataExplorerHook();
     const { data, valueFilter } = state || {};
 
     // Memoize tree leaf item values when remote data changes as these

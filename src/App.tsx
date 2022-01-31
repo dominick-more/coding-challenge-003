@@ -9,14 +9,15 @@ function App() {
         boxSizing: 'border-box',
         height: '100vh',
         width: '100%',
-        padding: '20px 0'
+        padding: '20px'
       }}>
       <CssBaseline />
       <Container
         maxWidth='lg'
         sx={{
             height: '100%',
-            width: '100%'
+            width: '100%',
+            padding: '0px !important'
         }}>
         <DataExplorerContainer>
           <Grid
@@ -29,7 +30,6 @@ function App() {
             wrap='wrap'
             sx={{
               height: '100%',
-              margin: 'auto 0 !important', 
               width: '100%'}}>
             <Grid
               item
@@ -37,9 +37,7 @@ function App() {
               alignItems='center'
               justifyContent='center'
               sx={{
-                  display: 'flex',
-                  margin: '0 auto',
-                  padding: '0px !important'
+                  display: 'flex'
               }}>
               <DataExplorerPanel maxHeight={'768px'}/>
             </Grid>  

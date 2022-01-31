@@ -61,21 +61,19 @@ const DataAppCard: FC<{treeNode: DataTreeNode}> = ({treeNode}) => {
 };
 
 const DataAppCardView: FC = () => {
-    const context = useDataExplorerHook();
     const theme = useTheme();
-    const { state, actionCreators, readAccessors } = context || {};
+    const { state, readAccessors } = useDataExplorerHook();
     const { data, treeNodeSelection, valueFilter } = state || {};
 
     // Memoize app tree nodes based on current node branch selection and value filter.
     const appTreeNodes = useMemo(() => {
-        if ((actionCreators === undefined) || (readAccessors === undefined) ||
-            (data === undefined) || (treeNodeSelection === undefined)) {
+        if ((data === undefined) || (readAccessors === undefined)) {
             return undefined;
         }
         const dataTreeLeaves = readAccessors.filterDataTreeLeaves(
             data, treeNodeSelection, valueFilter);
         return dataTreeLeaves;
-    }, [data, actionCreators, readAccessors, treeNodeSelection, valueFilter]);
+    }, [data, readAccessors, treeNodeSelection, valueFilter]);
 
     // Conditionally create child nodes based on appTreeNodes value
     let displayMessage: boolean = true;
