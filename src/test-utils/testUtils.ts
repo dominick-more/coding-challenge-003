@@ -23,6 +23,15 @@ const setupMockFetchSuccess = () => {
     });
 };
 
+const setupMockFetchInvalidJSON = () => {
+    fetchMock.mockIf('http://localhost:8080/data', (_req) => {
+        return Promise.resolve({
+            body: '[{foo}]',
+            status: 200
+        });
+    });
+};
+
 const setupMockFetchFail = () => {
     fetchMock.mockIf('http://localhost:8080/data', (_req) => {
         return Promise.resolve({
@@ -36,5 +45,6 @@ export {
     copyRemoteTestData,
     createAsyncWaitCallback,
     setupMockFetchSuccess,
+    setupMockFetchInvalidJSON,
     setupMockFetchFail
 }

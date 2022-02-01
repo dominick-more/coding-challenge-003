@@ -1,15 +1,16 @@
-import { act } from '@testing-library/react'
+import { act } from '@testing-library/react';
 import assert from 'assert';
 import { FC, Fragment } from 'react';
 import { render } from 'react-dom';
-import { defaultStateInitializer } from '../../reducers/data-explorer/dataExplorerReducer';
-import { FetchStatus } from '../../types/data-explorer/dataExplorerState';
 import DataExplorerReducerProvider from '../../providers/data-explorer/dataExplorerReducerProvider';
-import useDataExplorerHook, { DataExplorerHookResult } from './dataExplorerHook';
-import { copyRemoteTestData, createAsyncWaitCallback, setupMockFetchFail, setupMockFetchSuccess } from '../../test-utils/testUtils';
+import { defaultStateInitializer } from '../../reducers/data-explorer/dataExplorerReducer';
+import { copyRemoteTestData, createAsyncWaitCallback, setupMockFetchFail, setupMockFetchInvalidJSON,
+    setupMockFetchSuccess } from '../../test-utils/testUtils';
+import { FetchStatus } from '../../types/data-explorer/dataExplorerState';
+import useDataExplorerHook, { DataExplorerHookValue } from './dataExplorerHook';
 
-const expectHookResult = (value: DataExplorerHookResult | undefined):
-    Required<DataExplorerHookResult> | never => {
+const expectHookValue = (value: DataExplorerHookValue | undefined):
+    Required<DataExplorerHookValue> | never => {
     expect(value).toBeDefined();
     if (value === undefined) {
         throw new Error('hook result is undefined.');
@@ -34,27 +35,27 @@ const expectHookResult = (value: DataExplorerHookResult | undefined):
     return { actionCreators, eventHandlers, readAccessors, state };
 };
 
-type SetHookValueResult = (value: DataExplorerHookResult | undefined) => void;
+type SetHookValue = (value: DataExplorerHookValue | undefined) => void;
 
-const DataExplorerHookResultTestContainer: FC<{setValue: SetHookValueResult}> = ({setValue, children}) => {
+const DataExplorerHookTestContainer: FC<{setValue: SetHookValue}> = ({setValue, children}) => {
     const value = useDataExplorerHook();
     setValue(value);
-    return (<Fragment key='data-explorer-reducer-hook-result-container'>{children})</Fragment>);
+    return (<Fragment key='data-explorer-hook-test-container'>{children})</Fragment>);
 };
 
-class DataExplorerHookResultAccessor {
-    private value: DataExplorerHookResult | undefined = undefined;
+class DataExplorerHookValueAccessor {
+    private value: DataExplorerHookValue | undefined = undefined;
 
     constructor() {
         this.getValue = this.getValue.bind(this);
         this.setValue = this.setValue.bind(this);
     }
 
-    getValue(): DataExplorerHookResult | undefined {
+    getValue(): DataExplorerHookValue | undefined {
         return this.value;
     }
 
-    setValue(value: DataExplorerHookResult | undefined): void {
+    setValue(value: DataExplorerHookValue | undefined): void {
         this.value = value;
     }
 }
@@ -78,34 +79,34 @@ describe('DataExplorerHook Tests', () => {
 
     it('DataExplorerHook returns result', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         await act(async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerReducerProvider>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);
             });
         });
-        expectHookResult(hookResultAccessor.getValue());
+        expectHookValue(hookValueAccessor.getValue());
     });
 
     it('DataExplorerHook automatically fetches data', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerReducerProvider>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { readAccessors, state } = expectHookResult(hookResultAccessor.getValue());
+        const { readAccessors, state } = expectHookValue(hookValueAccessor.getValue());
         expect(state.data).toEqual(readAccessors.transformTableToDataTree(copyRemoteTestData()));
         expect(state.error).toBeUndefined();
         expect(state.fetchStatus).toEqual(FetchStatus.Done);
@@ -113,143 +114,165 @@ describe('DataExplorerHook Tests', () => {
 
     it('DataExplorerActionCreators re-fetches data', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         const initialState = defaultStateInitializer();
         initialState.fetchStatus = FetchStatus.Done;
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve, false);
                 render(<DataExplorerReducerProvider initialState={initialState}>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { actionCreators, state } = expectHookResult(hookResultAccessor.getValue());
+        const { actionCreators, state } = expectHookValue(hookValueAccessor.getValue());
         expect(state.data).toEqual(initialState.data);
         expect(state.fetchStatus).toEqual(initialState.fetchStatus);
         await act(async () => {
             await actionCreators.fetchData();
         });
         const { state: newState, readAccessors } =
-            expectHookResult(hookResultAccessor.getValue());
+            expectHookValue(hookValueAccessor.getValue());
         expect(newState.data).toEqual(readAccessors.transformTableToDataTree(copyRemoteTestData()));
         expect(newState.error).toBeUndefined();
         expect(newState.fetchStatus).toEqual(FetchStatus.Done);
     });
 
-    it('DataExplorerActionCreators sets fetch error', async () => {
+    it('DataExplorerActionCreators sets fetch error response', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         setupMockFetchFail();
         const initialState = defaultStateInitializer();
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerReducerProvider>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { state } = expectHookResult(hookResultAccessor.getValue());
+        const { state } = expectHookValue(hookValueAccessor.getValue());
         expect(state.data).toEqual(initialState.data);
         expect(state.fetchStatus).toEqual(FetchStatus.Done);
         expect(state.error).toBeInstanceOf(Error);
     });
 
+    it('DataExplorerActionCreators sets fetch invalid JSON parse error', async () => {
+        assert(container, 'Container may not be null.');
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
+        setupMockFetchInvalidJSON();
+        const initialState = defaultStateInitializer();
+        await act( async () => {
+            await new Promise<void>((resolve) => {
+                const callback = createAsyncWaitCallback(resolve);
+                render(<DataExplorerReducerProvider>
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
+                    />
+                </DataExplorerReducerProvider>, container, callback);    
+            });
+        });
+        const { state } = expectHookValue(hookValueAccessor.getValue());
+        expect(state.data).toEqual(initialState.data);
+        expect(state.fetchStatus).toEqual(FetchStatus.Done);
+        expect(state.error).toBeInstanceOf(Error);
+        expect(state.error?.message).toMatch(/^.*?invalid json.*$/i);
+    });
+
     it('DataExplorerActionCreators updates tree node selection', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         const initialState = defaultStateInitializer();
         initialState.fetchStatus = FetchStatus.Done;
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve, false);
                 render(<DataExplorerReducerProvider initialState={initialState}>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { actionCreators, state } = expectHookResult(hookResultAccessor.getValue());
+        const { actionCreators, state } = expectHookValue(hookValueAccessor.getValue());
         expect(state.treeNodeSelection).toBeUndefined();
         const newNodeId = '-1';
         act(() => {
             actionCreators.updateTreeNodeSelection(newNodeId);
         });
-        const { state: newState } = expectHookResult(hookResultAccessor.getValue());
+        const { state: newState } = expectHookValue(hookValueAccessor.getValue());
         expect(newState.treeNodeSelection).toEqual(newNodeId);
     });
 
     it('DataExplorerActionCreators updates value filter', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         const initialState = defaultStateInitializer();
         initialState.fetchStatus = FetchStatus.Done;
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve, false);
                 render(<DataExplorerReducerProvider initialState={initialState}>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { actionCreators, state } = expectHookResult(hookResultAccessor.getValue());
+        const { actionCreators, state } = expectHookValue(hookValueAccessor.getValue());
         expect(state.valueFilter).toBeUndefined();
         const newValueFilter: [number, number] = [0, 1];
         act(() => {
             actionCreators.updateValueFilter(newValueFilter);
         });
-        const { state: newState } = expectHookResult(hookResultAccessor.getValue());
+        const { state: newState } = expectHookValue(hookValueAccessor.getValue());
         expect(newState.valueFilter).toEqual(newValueFilter);
     });
 
     it('DataExplorerReadAccessors calculates tree min-max values', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         const initialState = defaultStateInitializer();
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerReducerProvider initialState={initialState}>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { readAccessors, state } = expectHookResult(hookResultAccessor.getValue());
+        const { readAccessors, state } = expectHookValue(hookValueAccessor.getValue());
         const maxFilterValue = readAccessors.getMinMaxFilterValue(state.data);
         expect(maxFilterValue).toEqual([1251, 89818]);
     });
 
     it('DataExplorerReadAccessors finds selected tree node', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         const initialState = defaultStateInitializer();
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerReducerProvider initialState={initialState}>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { actionCreators, state } = expectHookResult(hookResultAccessor.getValue());
+        const { actionCreators, state } = expectHookValue(hookValueAccessor.getValue());
         expect(state.valueFilter).toBeUndefined();
         const newNodeId = '65';
         act(() => {
             actionCreators.updateTreeNodeSelection(newNodeId);
         });
-        const { readAccessors, state: newState } = expectHookResult(hookResultAccessor.getValue());
+        const { readAccessors, state: newState } = expectHookValue(hookValueAccessor.getValue());
         expect(newState.treeNodeSelection).toEqual(newNodeId);
         const selectedTreeNode = readAccessors.findDataTreeNode(newState.data, newState.treeNodeSelection);
         expect(selectedTreeNode).toBeDefined();
@@ -258,25 +281,25 @@ describe('DataExplorerHook Tests', () => {
 
     it('DataExplorerReadAccessors returns selected tree node unfiltered leaves', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         const initialState = defaultStateInitializer();
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerReducerProvider initialState={initialState}>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { actionCreators, state } = expectHookResult(hookResultAccessor.getValue());
+        const { actionCreators, state } = expectHookValue(hookValueAccessor.getValue());
         expect(state.valueFilter).toBeUndefined();
         const newNodeId = '65';
         act(() => {
             actionCreators.updateTreeNodeSelection(newNodeId);
         });
-        const { readAccessors, state: newState } = expectHookResult(hookResultAccessor.getValue());
+        const { readAccessors, state: newState } = expectHookValue(hookValueAccessor.getValue());
         expect(newState.treeNodeSelection).toEqual(newNodeId);
         expect(newState.valueFilter).toBeUndefined();
         const filteredLeaves = readAccessors.filterDataTreeLeaves(
@@ -300,19 +323,20 @@ describe('DataExplorerHook Tests', () => {
 
     it('DataExplorerReadAccessors returns selected tree node filtered leaves', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         const initialState = defaultStateInitializer();
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerReducerProvider initialState={initialState}>
-                    <DataExplorerHookResultTestContainer
-                        setValue={hookResultAccessor.setValue}
+                    <DataExplorerHookTestContainer
+                        setValue={hookValueAccessor.setValue}
                     />
                 </DataExplorerReducerProvider>, container, callback);    
             });
         });
-        const { actionCreators, state } = expectHookResult(hookResultAccessor.getValue());
+        const { actionCreators, state } = expectHookValue(
+            hookValueAccessor.getValue());
         expect(state.valueFilter).toBeUndefined();
         const newNodeId = '65';
         const newFilterValue: [number, number] = [39946, 82017];
@@ -320,10 +344,12 @@ describe('DataExplorerHook Tests', () => {
             actionCreators.updateTreeNodeSelection(newNodeId);
             actionCreators.updateValueFilter(newFilterValue);
         });
-        const { readAccessors, state: newState } = expectHookResult(hookResultAccessor.getValue());
+        const { readAccessors, state: newState } = expectHookValue(
+            hookValueAccessor.getValue());
         expect(newState.treeNodeSelection).toEqual(newNodeId);
         expect(newState.valueFilter).toEqual(newFilterValue);
-        const filteredLeaves = readAccessors.filterDataTreeLeaves(newState.data, newState.treeNodeSelection, newState.valueFilter);
+        const filteredLeaves = readAccessors.filterDataTreeLeaves(
+            newState.data, newState.treeNodeSelection, newState.valueFilter);
         expect(filteredLeaves).toBeDefined();
         if (filteredLeaves === undefined) {
             return;
@@ -339,13 +365,13 @@ describe('DataExplorerHook Tests', () => {
     });
 });
 
-export default DataExplorerHookResultTestContainer;
+export default DataExplorerHookTestContainer;
 
 export {
-    expectHookResult,
-    DataExplorerHookResultAccessor
-}
- 
+    expectHookValue,
+    DataExplorerHookValueAccessor
+};
 export type {
-    SetHookValueResult
-}
+    SetHookValue
+};
+ 

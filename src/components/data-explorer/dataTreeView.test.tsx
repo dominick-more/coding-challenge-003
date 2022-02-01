@@ -2,16 +2,17 @@ import { act, findAllByRole,getByTestId, getByText } from '@testing-library/reac
 import userEvent from '@testing-library/user-event';
 import assert from 'assert';
 import { render } from 'react-dom';
-import { DataExplorerHookResult } from '../../hooks/data-explorer/dataExplorerHook';
-import DataExplorerHookResultTestContainer, { DataExplorerHookResultAccessor, expectHookResult } from '../../hooks/data-explorer/dataExplorerHook.test';
+import { DataExplorerHookValue } from '../../hooks/data-explorer/dataExplorerHook';
+import DataExplorerHookTestContainer, { DataExplorerHookValueAccessor, expectHookValue }
+    from '../../hooks/data-explorer/dataExplorerHook.test';
 import { createAsyncWaitCallback, setupMockFetchSuccess } from '../../test-utils/testUtils';
 import DataExplorerContainer from './dataExplorerContainer';
 import DataTreeView, { createTreeNodeKey, DataTreeViewId } from './dataTreeView';
 
 const findAndClickTreeItemByNodeId = (
-    dataHookResult: Required<DataExplorerHookResult>,
+    dataHookValue: Required<DataExplorerHookValue>,
     container: HTMLElement, treeNodeId: string): HTMLElement => {
-    const { readAccessors, state } = dataHookResult;
+    const { readAccessors, state } = dataHookValue;
     const treeNode = readAccessors.findDataTreeNode(state.data, treeNodeId);
     if (treeNode === undefined) {
         throw Error(`TreeNode with node id '${treeNodeId}' not found.`);
@@ -64,21 +65,21 @@ describe('DataTreeView Tests', () => {
 
     it('DataTreeView items rendered when selected.', async () => {
         assert(container, 'Container may not be null.');
-        const hookResultAccessor = new DataExplorerHookResultAccessor();
+        const hookValueAccessor = new DataExplorerHookValueAccessor();
         await act( async () => {
             await new Promise<void>((resolve) => {
                 const callback = createAsyncWaitCallback(resolve);
                 render(<DataExplorerContainer>
-                    <DataExplorerHookResultTestContainer setValue={hookResultAccessor.setValue}>
+                    <DataExplorerHookTestContainer setValue={hookValueAccessor.setValue}>
                         <DataTreeView/>
-                    </DataExplorerHookResultTestContainer>
+                    </DataExplorerHookTestContainer>
                 </DataExplorerContainer>, container, callback);
             });
         });
-        const hookResult = expectHookResult(hookResultAccessor.getValue());
-        const treeItemL01 = findAndClickTreeItemByNodeId(hookResult, container, '46');
-        const treeItemL02 = findAndClickTreeItemByNodeId(hookResult, treeItemL01, '61');
-        const treeItemL03 = findAndClickTreeItemByNodeId(hookResult, treeItemL02, '65');
+        const hookValue = expectHookValue(hookValueAccessor.getValue());
+        const treeItemL01 = findAndClickTreeItemByNodeId(hookValue, container, '46');
+        const treeItemL02 = findAndClickTreeItemByNodeId(hookValue, treeItemL01, '61');
+        const treeItemL03 = findAndClickTreeItemByNodeId(hookValue, treeItemL02, '65');
         expect(treeItemL03).toHaveAttribute('aria-selected', 'true');
     });
 });

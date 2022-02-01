@@ -40,31 +40,42 @@ class DataExplorerActionCreatorsDefault implements DataExplorerActionCreators {
         if (this.getState().fetchStatus === FetchStatus.InProgress) {
             return Promise.resolve();
         }
-        const dataUrl = getDataUrl();
         this.dispatch({
             type: DataExplorerActionType.UpdateFetchStatus,
             payload: FetchStatus.InProgress
         });
-        const thisClosure = this;
-        return new Promise((resolve) => {
-            const dataPromise = fetch(dataUrl, {mode: 'cors'});
-            // Delay dispatch until provider is rendered with fetchStatus
-            setTimeout(() => {
-                dataPromise.then((response) => response.json()).then((data) => {
-                    thisClosure.dispatch({
-                        type: DataExplorerActionType.UpdateData,
-                        payload: thisClosure.readAccessors.transformTableToDataTree(
-                            Array.isArray(data) ? data : [])
-                    });
-                }).catch((reason) => {
-                    thisClosure.dispatch({
-                        type: DataExplorerActionType.UpdateData,
-                        payload: coerceAsError(reason)
-                    });
-                }).finally(() => resolve());
-            }, thisClosure.getAsyncWaitTimeout());
-            
+        type VoidResolver = (value: void | PromiseLike<void>) => void;
+        const jsonDataDispatcher = ((data: any): void => {
+            this.dispatch({
+                type: DataExplorerActionType.UpdateData,
+                payload: this.readAccessors.transformTableToDataTree(
+                    Array.isArray(data) ? data : [])
+            });
         });
+        const fetchErrorDispatcher = ((reason: any): void => {
+            this.dispatch({
+                type: DataExplorerActionType.UpdateData,
+                payload: coerceAsError(reason)
+            });
+        });
+        const responseCallback = ((resolve: VoidResolver,
+            responsePromise: Promise<Response>): void => {
+            responsePromise.then((response) => {
+                return response.json();
+            }).then((data) => {
+                jsonDataDispatcher(data);
+            }).catch((reason) => {
+                fetchErrorDispatcher(reason);
+            }).finally(() => resolve());
+        });
+        const fetchDataResolver = ((resolve: VoidResolver): void => {
+            const dataUrl = getDataUrl();
+            const responsePromise = fetch(dataUrl, {mode: 'cors'});
+            // Delay dispatch until provider is rendered with fetchStatus
+            setTimeout(responseCallback, this.getAsyncWaitTimeout(),
+                resolve, responsePromise);
+        });
+        return new Promise(fetchDataResolver);
     }
 
     getAsyncWaitTimeout(): number {

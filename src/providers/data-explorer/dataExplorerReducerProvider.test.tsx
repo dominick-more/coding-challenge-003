@@ -2,7 +2,7 @@ import { act } from '@testing-library/react'
 import assert from 'assert';
 import { FC, Fragment, useContext } from 'react';
 import { render } from 'react-dom';
-import DataExplorerReducerContext, { DataExplorerReducerContextValue } from '../../contexts/data-explorer/dataExplorerReducerContext';
+import ReducerContext, { DataExplorerReducerContextValue } from '../../contexts/data-explorer/dataExplorerReducerContext';
 import { createRootTreeNode, DataExplorerActionType, defaultStateInitializer } from '../../reducers/data-explorer/dataExplorerReducer';
 import DataExplorerState, { FetchStatus } from '../../types/data-explorer/dataExplorerState';
 import DataExplorerReducerProvider from './dataExplorerReducerProvider';
@@ -28,7 +28,7 @@ const expectContextValue = (value: DataExplorerReducerContextValue | undefined):
 type SetReducerContextValue = (value: DataExplorerReducerContextValue | undefined) => void;
 
 const DataExplorerReducerTestContainer: FC<{setValue: SetReducerContextValue}> = ({setValue, children}) => {
-    const value = useContext(DataExplorerReducerContext);
+    const value = useContext(ReducerContext);
     setValue(value);
     return (<Fragment key='data-explorer-reducer-test-container'>{children})</Fragment>);
 };

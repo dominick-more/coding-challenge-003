@@ -1,14 +1,14 @@
 import { useContext, useEffect, useMemo } from 'react';
 import DataExplorerActionCreatorsDefault from '../../action-creators/data-explorer/dataExplorerActionCreatorsDefault';
 import DataExplorerReadAccessorsDefault from '../../accessors/data-explorer/dataExplorerReadAccessorsDefault';
-import Context from '../../contexts/data-explorer/dataExplorerReducerContext';
+import ReducerContext from '../../contexts/data-explorer/dataExplorerReducerContext';
 import DataExplorerActionCreators from '../../types/data-explorer/dataExplorerActionCreators';
 import DataExplorerReadAccessors from '../../types/data-explorer/dataExplorerAccessors';
 import DataExplorerState from '../../types/data-explorer/dataExplorerState';
 import DataExplorerEventHandlers from '../../types/data-explorer/dataExplorerEventHandlers';
 import DataExplorerEventHandlersDefault from '../../event-handlers/data-explorer/dataExplorerEventHandlersDefault';
 
-type DataExplorerHookResult = {
+type DataExplorerHookValue = {
     actionCreators?: DataExplorerActionCreators;
     eventHandlers?: DataExplorerEventHandlers;
     readAccessors?: DataExplorerReadAccessors;
@@ -18,8 +18,8 @@ type DataExplorerHookResult = {
 const readAccessors = new DataExplorerReadAccessorsDefault();
 const eventHandlers = new DataExplorerEventHandlersDefault();
 
-const useDataExplorerHook = (): DataExplorerHookResult => {
-    const reducerContext = useContext(Context);
+const useDataExplorerHook = (): DataExplorerHookValue => {
+    const reducerContext = useContext(ReducerContext);
     const { dispatch, state, getState } = reducerContext || {};
     const { fetchStatus } = state || {};
 
@@ -56,5 +56,5 @@ const useDataExplorerHook = (): DataExplorerHookResult => {
 export default useDataExplorerHook;
 
 export type {
-    DataExplorerHookResult
+    DataExplorerHookValue
 }
