@@ -1,4 +1,4 @@
-import { act, findAllByRole,getByTestId, getByText } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import assert from 'assert';
 import { render } from 'react-dom';
@@ -9,9 +9,8 @@ import { createAsyncWaitCallback, setupMockFetchSuccess } from '../../test-utils
 import DataExplorerContainer from './dataExplorerContainer';
 import DataTreeView, { createTreeNodeKey, DataTreeViewId } from './dataTreeView';
 
-const findAndClickTreeItemByNodeId = (
-    dataHookValue: Required<DataExplorerHookValue>,
-    container: HTMLElement, treeNodeId: string): HTMLElement => {
+const findAndClickTreeItemByNodeId = (dataHookValue: Required<DataExplorerHookValue>,
+    treeNodeId: string): HTMLElement => {
     const { readAccessors, state } = dataHookValue;
     const treeNode = readAccessors.findDataTreeNode(state.data, treeNodeId);
     if (treeNode === undefined) {
@@ -19,11 +18,9 @@ const findAndClickTreeItemByNodeId = (
     }
     expect(treeNode).toBeDefined();
     const treeItemKey = createTreeNodeKey(treeNode);
-    const treeItemRoot = getByTestId(container, treeItemKey);
-    const treeNodeContent = getByText(treeItemRoot, treeNode.name);
-    act(() => {
-        userEvent.click(treeNodeContent);
-    });
+    const treeItemRoot = screen.getByTestId(treeItemKey);
+    const treeNodeContent = screen.getByText(treeNode.name);
+    userEvent.click(treeNodeContent);
     return treeItemRoot;
 };
 
@@ -46,7 +43,7 @@ describe('DataTreeView Tests', () => {
     it('DataTreeView is rendered', async () => {
         assert(container, 'Container may not be null.');
         render(<DataTreeView/>, container);
-        expect(getByTestId(container, DataTreeViewId)).toBeInTheDocument();
+        expect(screen.getByTestId(DataTreeViewId)).toBeInTheDocument();
     });
 
     it('DataTreeView is rendered with top level child nodes', async () => {
@@ -59,7 +56,7 @@ describe('DataTreeView Tests', () => {
                 </DataExplorerContainer>, container, callback);
             });
         });
-        const topLevelChildNodes = await findAllByRole(container, 'treeitem');
+        const topLevelChildNodes = await screen.findAllByRole('treeitem');
         expect(topLevelChildNodes).toHaveLength(3);
     });
 
@@ -77,9 +74,9 @@ describe('DataTreeView Tests', () => {
             });
         });
         const hookValue = expectHookValue(hookValueAccessor.getValue());
-        const treeItemL01 = findAndClickTreeItemByNodeId(hookValue, container, '46');
-        const treeItemL02 = findAndClickTreeItemByNodeId(hookValue, treeItemL01, '61');
-        const treeItemL03 = findAndClickTreeItemByNodeId(hookValue, treeItemL02, '65');
+        findAndClickTreeItemByNodeId(hookValue, '46');
+        findAndClickTreeItemByNodeId(hookValue, '61');
+        const treeItemL03 = findAndClickTreeItemByNodeId(hookValue, '65');
         expect(treeItemL03).toHaveAttribute('aria-selected', 'true');
     });
 });
